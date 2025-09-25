@@ -19,11 +19,21 @@ public class ProjectController {
     private ProjectRepository projectRepository;
     
     @Autowired
+    private TicketRepository ticketRepository;
+    
+    @Autowired
     private ChecklistItemRepository checklistRepository;
     
     @GetMapping
-    public List<Project> getAllProjects() {
-        return projectRepository.findAll();
+    public List<ProjectDTO> getAllProjects() {
+        return projectRepository.findAll().stream()
+        .map(p -> new ProjectDTO(
+             p.getId(),
+             p.getName(),
+             p.getColor(),
+             p.getDescription(),
+             ticketRepository.countTicketsByProjectId(p.getId())
+        )).toList();
     }
     
     @GetMapping("/{id}")

@@ -1,10 +1,10 @@
 package com.ebu.tracker.entity;
 
-import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 
 public class ProjectDashboardDTO {
-    private Long ticketCount;
+    private int ticketCount;
     private Long teamSize;
     private int checklistProgress;
     private Boolean onTrack;
@@ -13,12 +13,14 @@ public class ProjectDashboardDTO {
     private Date backendStartDate;
     private Date backendEndDate;
     private String color;
+    private List<TeamMemberStatsDTO> teamMemberStats;
+
 
     // Getters and Setters
-    public Long getTicketCount() {
+    public int getTicketCount() {
         return ticketCount;
     }           
-    public void setTicketCount(Long ticketCount) {
+    public void setTicketCount(int ticketCount) {
         this.ticketCount = ticketCount;
     }
     public Long getTeamSize() {
@@ -69,5 +71,10 @@ public class ProjectDashboardDTO {
     public void setColor(String color) {
         this.color = color;
     }
-
+    public List<TeamMemberStatsDTO> getTeamMemberStats() {
+        return teamMemberStats;
+    }
+    public void setTeamMemberStats(List<TeamMemberStatsDTO> teamMemberStats) {
+        this.teamMemberStats = teamMemberStats;
+    }
 }
