@@ -70,8 +70,6 @@ public ResponseEntity<Map<String, ProjectDashboardDTO>> getDashboardStats() {
 
     stats.put(key, dto);
 }
-
-
     return ResponseEntity.ok(stats);
     }
 }
