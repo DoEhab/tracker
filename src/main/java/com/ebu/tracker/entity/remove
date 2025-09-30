@@ -1,0 +1,509 @@
+mvn clean spring-boot:run
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resource Tracker — Board</title>
+  <style>
+    /* kept the same visual style (condensed) */
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#333}
+    .container{max-width:1200px;margin:24px auto;padding:20px}
+    .header{background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+    .nav-tabs{display:flex;gap:10px;margin-top:12px}
+    .nav-tab{padding:10px 18px;border-radius:20px;background:rgba(255,255,255,.85);cursor:pointer;font-weight:600}
+    .nav-tab.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .form-section{background:rgba(255,255,255,.95);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+    .kanban-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+    .kanban-column{background:rgba(255,255,255,.95);border-radius:12px;padding:14px;min-height:160px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+    .column-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .ticket-count{background:#667eea;color:#fff;border-radius:999px;padding:4px 8px;font-size:12px}
+    .ticket-card{background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;border-left:4px solid #667eea;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+    .ticket-title{font-weight:600;margin-bottom:6px}
+    .ticket-meta{font-size:12px;color:#666;display:flex;justify-content:space-between}
+    label{display:block;margin-top:8px;font-weight:600}
+    input,textarea,select{width:100%;padding:8px;margin-top:6px;border-radius:8px;border:1px solid #e9ecef}
+    button{margin-top:12px;padding:10px 16px;border-radius:8px;border:0;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer}
+    .loading{padding:18px;color:#666}
+    @media (max-width:720px){.kanban-board{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Resource Tracker</h1>
+      <div class="nav-tabs" id="nav-tabs">
+        <div class="nav-tab active" data-tab="calendar-tab">Calendar</div>
+        <div class="nav-tab " data-tab="dashboard-tab">Dashboard</div>
+        <div class="nav-tab" data-tab="board-tab">Kanban Board</div>
+        <div class="nav-tab" data-tab="projects-tab">Projects</div>
+        <div class="nav-tab" data-tab="team-tab">Team</div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div id="calendar-tab" class="tab-content active">
+      <div id="calendar" class="form-section"> <div class="loading">Loading calendar...</div> </div>
+    </div>
+     <!-- Dashboard -->
+     <div id="dashboard-tab" class="tab-content active">
+      <div id="dashboard" class="form-section"> <div class="loading">Loading dashboard...</div> </div>
+    </div>
+
+    <!-- Board -->
+    <div id="board-tab" class="tab-content">
+      <div class="form-section">
+        <h3>Create Ticket</h3>
+        <form id="ticket-form">
+          <label>Title <input name="title" required /></label>
+          <label>Description <textarea name="description" rows="2"></textarea></label>
+          <label>Priority
+            <select name="priority">
+              <option value="LOW">Low</option>
+              <option value="MEDIUM" selected>Medium</option>
+              <option value="HIGH">High</option>
+              <option value="URGENT">Urgent</option>
+            </select>
+          </label>
+          <label>Project
+            <select name="projectId" id="ticket-project-select">
+              <option value="">No Project</option>
+            </select>
+          </label>
+          <label>Assignee
+            <select name="assigneeId" id="ticket-assignee-select">
+              <option value="">Unassigned</option>
+            </select>
+          </label>
+          <button type="submit">Add Ticket</button>
+        </form>
+      </div>
+
+      <div id="kanban-board" class="kanban-board">
+        <div class="loading">Loading board...</div>
+      </div>
+    </div>
+
+    <!-- Projects -->
+    <div id="projects-tab" class="tab-content">
+      <div id="projects-list" class="form-section"><div class="loading">Loading projects...</div></div>
+      <div class="form-section">
+        <h3>Create Project</h3>
+        <form id="project-form">
+          <label>Name <input name="name" required /></label>
+          <label>Color <input type="color" name="color" value="#667eea" /></label>
+      
+          <label>Frontend Start Date <input type="date" name="frontendStartDate" /></label>
+          <label>Frontend End Date <input type="date" name="frontendEndDate" /></label>
+      
+          <label>Backend Start Date <input type="date" name="backendStartDate" /></label>
+          <label>Backend End Date <input type="date" name="backendEndDate" /></label>
+      
+          <button type="submit">Create Project</button>
+        </form>
+      </div>
+      
+    </div>
+
+    <!-- Team -->
+    <div id="team-tab" class="tab-content">
+      <div id="team-list" class="form-section"><div class="loading">Loading team...</div></div>
+      <div class="form-section">
+        <h3>Add Team Member</h3>
+        <form id="team-form">
+          <label>Name <input name="name" required /></label>
+          <label>Role <input name="role" /></label>
+          <button type="submit">Add Member</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ----------------- CONFIG ----------------- */
+const API_BASE = 'http://localhost:8080/api'; // keep this pointing to your backend
+let projects = [], teamMembers = [], tickets = [], dashboardStats = {};
+
+/* ----------------- HELPERS ----------------- */
+const $ = id => document.getElementById(id);
+const safeJson = async (res) => {
+  console.log("[FETCH RESPONSE]", {
+    url: res.url,
+    status: res.status,
+    ok: res.ok
+  });
+
+  const text = await res.text().catch(() => null);
+  console.log("[RAW RESPONSE TEXT]", text);
+
+  if (!res.ok) {
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+
+  try {
+    const json = text && JSON.parse(text);
+    console.log("[FETCH JSON]", json);
+    return json;
+  } catch (err) {
+    console.error("❌ JSON Parse Error", err.message, { text });
+    throw err;
+  }
+};
+
+
+const escapeHtml = s => s==null ? '' : String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+/* ----------------- INIT ----------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  setupTabs();
+  setupFormListeners();
+  loadInitialData();
+});
+
+/* ----------------- UI wiring ----------------- */
+function setupTabs(){
+  document.querySelectorAll('.nav-tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const id = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if(id==='board-tab') renderKanbanBoard();
+    });
+  });
+}
+
+function setupFormListeners(){
+  $('project-form').addEventListener('submit', handleProjectSubmit);
+  $('team-form').addEventListener('submit', handleTeamSubmit);
+  $('ticket-form').addEventListener('submit', handleTicketSubmit);
+}
+
+/* ----------------- LOADERS ----------------- */
+async function loadInitialData(){
+  try {
+    await Promise.all([loadProjects(), loadTeamMembers(), loadTickets(), loadDashboardStats()]);
+    populateTicketFormOptions();
+    renderDashboard1();
+    renderKanbanBoard();
+  } catch (err) {
+    console.error(err);
+    alert('Load failed: ' + (err.message || err));
+  }
+}
+
+async function loadProjects(){
+  const res = await fetch(`${API_BASE}/projects`);
+  projects = await safeJson(res) || [];
+  populateTicketFormOptions();
+  renderProjectsList();
+}
+async function loadTeamMembers(){
+  const res = await fetch(`${API_BASE}/team`);
+  teamMembers = await safeJson(res) || [];
+  populateTicketFormOptions();
+  renderTeamList();
+}
+async function loadTickets(){
+  const res = await fetch(`${API_BASE}/tickets`);
+  tickets = await safeJson(res) || [];
+  renderKanbanBoard();
+}
+async function loadDashboardStats(){
+  // FIXED: use the exact endpoint your backend provides
+  const res = await fetch(`${API_BASE}/dashboard/stats`);
+  dashboardStats = await safeJson(res) || {};
+  renderDashboard();
+}
+
+/* ----------------- RENDERERS ----------------- */
+function renderTimeline(){
+  const container = $('dashboard');
+  container.innerHTML = `
+    <h3>Project Timeline</h3>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${
+        Object.entries(dashboardStats).map(([name, s]) => `
+          <div style="background:#fff;padding:10px;border-radius:8px">
+            <strong>${escapeHtml(name)}</strong>
+            <div style="margin-top:6px;font-size:12px;color:#666">Frontend</div>
+            <div style="height:8px;background:#eee;border-radius:4px;overflow:hidden">
+              <div style="height:100%;background:#4caf50;width:${getProgress(s.frontendStartDate, s.frontendEndDate)}%"></div>
+            </div>
+            <div style="margin-top:6px;font-size:12px;color:#666">Backend</div>
+            <div style="height:8px;background:#eee;border-radius:4px;overflow:hidden">
+              <div style="height:100%;background:#2196f3;width:${getProgress(s.backendStartDate, s.backendEndDate)}%"></div>
+            </div>
+          </div>
+        `).join('')
+      }
+    </div>
+  `;
+}
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '-';
+  return d.toLocaleDateString('en-GB'); 
+  // "en-GB" gives DD/MM/YYYY format
+}
+
+function getProgress(start, end){
+  if(!start || !end) return 0;
+  const now = new Date();
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if(now < startDate) return 0;
+  if(now > endDate) return 100;
+  return ((now - startDate) / (endDate - startDate)) * 100;
+}
+
+function renderDashboard1(){
+  const container = $('calendar');
+
+  container.innerHTML = `
+    <h3>Project Timeline</h3>
+    <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden">
+      <thead style="background:#f5f5f5">
+        <tr>
+          <th style="padding:8px;text-align:left">Project</th>
+          <th style="padding:8px;text-align:left">Frontend Start</th>
+          <th style="padding:8px;text-align:left">Frontend End</th>
+          <th style="padding:8px;text-align:left">Backend Start</th>
+          <th style="padding:8px;text-align:left">Backend End</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          Object.entries(dashboardStats).map(([name, s]) => `
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid #ddd">${escapeHtml(name)}</td>
+              <td style="padding:8px;border-bottom:1px solid #ddd">${s.frontendStartDate ? formatDate(s.frontendStartDate) : '-'}</td>
+              <td style="padding:8px;border-bottom:1px solid #ddd">${s.frontendEndDate ? formatDate(s.frontendEndDate) : '-'}</td>
+              <td style="padding:8px;border-bottom:1px solid #ddd">${s.backendStartDate ? formatDate(s.backendStartDate) : '-'}</td>
+              <td style="padding:8px;border-bottom:1px solid #ddd">${s.backendEndDate ? formatDate(s.backendEndDate) : '-'}</td>
+            </tr>
+          `).join('')
+        }
+      </tbody>
+    </table>
+  `;
+}
+
+function renderDashboard(){
+  const container = $('dashboard');
+  container.innerHTML = `
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div style="background:#fff;padding:14px;border-radius:10px;min-width:160px">
+        Projects<br><strong>${projects.length}</strong>
+      </div>
+      <div style="background:#fff;padding:14px;border-radius:10px;min-width:160px">
+        Team<br><strong>${teamMembers.length}</strong>
+      </div>
+      <div style="background:#fff;padding:14px;border-radius:10px;min-width:160px">
+        Tickets<br><strong>${tickets.length}</strong>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      ${
+        Object.keys(dashboardStats).length
+          ? Object.entries(dashboardStats).map(([name, s]) => `
+            <div style="background:#fff;margin-top:8px;padding:12px;border-radius:8px">
+              <strong>${escapeHtml(name)}</strong><br>
+              Tickets: ${s.ticketCount ?? 0}, Team: ${s.teamSize ?? 0}, Progress: ${s.checklistProgress ?? 0}%<br>
+              <span style="font-size:12px;color:#555">
+                Frontend: ${s.frontendStartDate ? formatDate(s.frontendStartDate) : '-'} → ${s.frontendEndDate ? formatDate(s.frontendEndDate) : '-'}<br>
+                Backend: ${s.backendStartDate ? formatDate(s.backendStartDate) : '-'} → ${s.backendEndDate ? formatDate(s.backendEndDate) : '-'}
+              </span>
+
+              <!-- ✅ Team Members Section -->
+              ${
+                s.teamMemberStats && s.teamMemberStats.length
+                  ? `
+                    <div style="margin-top:8px">
+                      <span style="font-weight:600;font-size:13px">Team Members:</span>
+                      <ul style="margin:4px 0 0 12px;font-size:13px;color:#333">
+                        ${s.teamMemberStats.map(m => `
+                          <li>${escapeHtml(m.assignee)} — ${m.completedTickets} tickets</li>
+                        `).join('')}
+                      </ul>
+                    </div>
+                  `
+                  : ''
+              }
+            </div>`
+          ).join('')
+          : '<div class="loading">No dashboard stats</div>'
+      }
+    </div>
+  `;
+}
+
+
+
+function renderProjectsList(){
+  $('projects-list').innerHTML = projects.length ? projects.map(p=>`<div style="padding:8px 0"><span style="color:${p.color||'#667eea'}">■</span> ${escapeHtml(p.name)}</div>`).join('') : '<div class="loading">No projects yet</div>';
+}
+
+function renderTeamList(){
+  $('team-list').innerHTML = teamMembers.length ? teamMembers.map(m=>`<div style="padding:6px 0">${escapeHtml(m.name)} <small style="color:#666">(${escapeHtml(m.role||'')})</small></div>`).join('') : '<div class="loading">No team members</div>';
+}
+
+function renderKanbanBoard(){
+  const container = $('kanban-board');
+  if(!tickets || !Array.isArray(tickets)) { container.innerHTML = '<div class="loading">No tickets</div>'; return; }
+
+  const statuses = ['TODO','IN_PROGRESS','IN_REVIEW','DONE'];
+  const labels = ['To Do','In Progress','In Review','Done'];
+
+  // build columns per team member
+  const memberCols = teamMembers.map(member=>{
+    const memberTickets = tickets.filter(t => t.assigneeName === member.name);
+    const groups = {};
+    statuses.forEach(s=>groups[s] = memberTickets.filter(t => t.status === s));
+    return {member,groups,total:memberTickets.length};
+  });
+
+  // unassigned
+  const unassigned = tickets.filter(t => !t.assigneeName);
+  const unGroups = {};
+  statuses.forEach(s=>unGroups[s] = unassigned.filter(t=>t.status === s));
+
+  // compose HTML
+  const colsHtml = memberCols.map(({member,groups,total})=>`
+    <div class="kanban-column">
+      <div class="column-header"><div><div style="font-weight:700">${escapeHtml(member.name)}</div><div style="font-size:12px;color:#666">${escapeHtml(member.role||'')}</div></div><div class="ticket-count">${total}</div></div>
+      ${statuses.map((s,i)=>`<div style="margin-bottom:10px"><div style="font-weight:700;color:#667eea;margin-bottom:6px">${labels[i]} (${groups[s].length})</div>${groups[s].map(t=>ticketCardHtml(t,s)).join('')}</div>`).join('')}
+    </div>`).join('');
+
+  const unassignedHtml = `
+    <div class="kanban-column">
+      <div class="column-header"><div><div style="font-weight:700">Unassigned</div><div style="font-size:12px;color:#666">No owner</div></div><div class="ticket-count">${unassigned.length}</div></div>
+      ${statuses.map((s,i)=>`<div style="margin-bottom:10px"><div style="font-weight:700;color:#667eea;margin-bottom:6px">${labels[i]} (${unGroups[s].length})</div>${unGroups[s].map(t=>ticketCardHtml(t,s)).join('')}</div>`).join('')}
+    </div>`;
+
+  container.innerHTML = colsHtml + unassignedHtml;
+}
+
+function ticketCardHtml(ticket, status){
+  const color = ticket.projectColor || '#667eea';
+  const created = formatDate(ticket.createdAt);
+  // clicking a ticket advances it to the next status
+  return `<div class="ticket-card" style="border-left-color:${escapeHtml(color)}" onclick="handleTicketClick(${ticket.id},'${status}')">
+    <div class="ticket-title">${escapeHtml(ticket.title)}</div>
+    <div class="ticket-meta"><div>${escapeHtml(ticket.projectName||'No Project')}</div><div>${escapeHtml(created)}</div></div>
+  </div>`;
+}
+
+/* ----------------- ACTIONS ----------------- */
+function populateTicketFormOptions(){
+  const projSel = $('ticket-project-select');
+  const assignSel = $('ticket-assignee-select');
+  projSel.innerHTML = '<option value="">No Project</option>' + projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  assignSel.innerHTML = '<option value="">Unassigned</option>' + teamMembers.map(m=>`<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
+}
+
+async function handleProjectSubmit(e){
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  await fetch(`${API_BASE}/projects`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)})
+  .then(async (res) => {
+  console.log("Raw response:", res);   // Logs the Response object
+  const data = await safeJson(res);    // Parse JSON with your helper
+  console.log("Parsed JSON:", data);   // Logs parsed data
+  return data;
+})
+.catch(err => {
+  console.error("Fetch error handle project submit:", err);
+});
+  e.target.reset();
+  await loadProjects();
+  await loadDashboardStats();
+}
+
+async function handleTeamSubmit(e){
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  await fetch(`${API_BASE}/team`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)})
+  .then(async (res) => {
+  console.log("Raw response:", res);   // Logs the Response object
+  const data = await safeJson(res);    // Parse JSON with your helper
+  console.log("Parsed JSON:", data);   // Logs parsed data
+  return data;
+})
+.catch(err => {
+  console.error("Fetch error handle team submit:", err);
+});
+  e.target.reset();
+  await loadTeamMembers();
+  await loadDashboardStats();
+}
+
+async function handleTicketSubmit(e){
+  e.preventDefault();
+  const fd = Object.fromEntries(new FormData(e.target));
+  // backend accepts nested project/assignee with id; keep that for JPA binding
+  const payload = {
+    title: fd.title,
+    description: fd.description || null,
+    priority: fd.priority || 'MEDIUM',
+    status: 'TODO',
+    // send nested objects with id (your backend currently accepts Ticket entity bind)
+    project: fd.projectId ? { id: parseInt(fd.projectId) } : null,
+    assignee: fd.assigneeId ? { id: parseInt(fd.assigneeId) } : null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  await fetch(`${API_BASE}/tickets`, 
+  {
+    method:'POST', 
+    headers:
+    {
+      'Content-Type':'application/json'
+    }, 
+    body: JSON.stringify(payload)}).then(async (res) => {
+  console.log("Raw response:", res);   // Logs the Response object
+  const data = await safeJson(res);    // Parse JSON with your helper
+  console.log("Parsed JSON:", data);   // Logs parsed data
+  return data;
+})
+.catch(err => {
+  console.error("Fetch error handle ticket submit:", err);
+});
+  e.target.reset();
+  await loadTickets();
+  await loadDashboardStats();
+}
+
+/* clicking a ticket advances it to next status */
+async function handleTicketClick(ticketId, currentStatus){
+  const flow = ['TODO','IN_PROGRESS','IN_REVIEW','DONE'];
+  const idx = flow.indexOf(currentStatus);
+  const next = flow[Math.min(idx+1, flow.length-1)];
+  if(next === currentStatus) return;
+  await fetch(`${API_BASE}/tickets/${ticketId}/status`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status: next })
+})
+.then(async (res) => {
+  console.log("Raw response:", res);   // Logs the Response object
+  const data = await safeJson(res);    // Parse JSON with your helper
+  console.log("Parsed JSON:", data);   // Logs parsed data
+  return data;
+})
+.catch(err => {
+  console.error("Fetch error handle ticket:", err);
+});
+
+  await loadTickets();
+  await loadDashboardStats();
+}
+
+</script>
+</body>
+</html>
